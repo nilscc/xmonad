@@ -4,7 +4,9 @@
 --                                                                  --
 --                                                                  --
 -- XMonad version 0.8.1-darcs                                       --
+<<<<<<< HEAD
 -- XMonad config: 2009-09-06                                        --
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
 --                                                                  --
 -- by Nils                                                          --
 --                                                                  --
@@ -14,8 +16,10 @@
 --                                                                  --
 --                                                                  --
 -- Additional files:                                                --
+<<<<<<< HEAD
 -- http://www.n-sch.de/xmonad/icons.zip                             --
 -- http://www.n-sch.de/xmonad/conkytoprc                            --
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
 --                                                                  --
 --                                                                  --
 -- For the conkybar you need conky-cli or compile it with the       --
@@ -31,6 +35,7 @@
 --                                                                  --
 -- {{{ Basic usage:                                                 --
 --                                                                  --
+<<<<<<< HEAD
 -- M  = Mod4Mask                                                    --
 -- M1 = Mod1Mask "Alt"                                              --
 -- S  = ShiftMask                                                   --
@@ -110,6 +115,7 @@
 --                                                                  --
 -- * Comment:                                                       --
 -- M + ^ is basicly an alias for M + 0 (the last workspace)         --
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
 --                                                                  --
 -- }}}                                                              --
 ----------------------------------------------------------------------
@@ -120,7 +126,9 @@
 import XMonad
 
 import Data.Monoid
+<<<<<<< HEAD
 import Data.Maybe (fromMaybe) 
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
 import System.IO
 import System.Exit
 
@@ -128,12 +136,15 @@ import Control.Monad (liftM2)
 
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
+<<<<<<< HEAD
 import qualified Data.List       as L
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
 
 -- usefull stuff
 import Graphics.X11.ExtraTypes.XF86 
 
 -- Actions
+<<<<<<< HEAD
 import XMonad.Actions.CycleWS
 import XMonad.Actions.CycleRecentWS
 import XMonad.Actions.CopyWindow
@@ -144,6 +155,7 @@ import XMonad.Actions.WindowGo
 -- Utils
 import XMonad.Util.Run (spawnPipe)
 import XMonad.Util.EZConfig
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
 
 -- Hooks
 import XMonad.Hooks.ManageDocks
@@ -154,12 +166,15 @@ import XMonad.Hooks.UrgencyHook
 import XMonad.Hooks.FadeInactive
 
 import XMonad.Hooks.ServerMode
+<<<<<<< HEAD
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
 
 -- Layouts
 import XMonad.Layout.Reflect
 import XMonad.Layout.PerWorkspace
 import XMonad.Layout.LayoutHints
 import XMonad.Layout.ToggleLayouts
+<<<<<<< HEAD
 import XMonad.Layout.SimplestFloat
 --import XMonad.Layout.SimpleDecoration
 
@@ -167,17 +182,23 @@ import XMonad.Layout.ResizableTile
 import XMonad.Layout.Grid
 import XMonad.Layout.NoBorders
 import XMonad.Layout.ThreeColumns
+<<<<<<< HEAD
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
 import XMonad.Layout.IM
 import Data.Ratio ((%))
 
 -- }}}
 
+<<<<<<< HEAD
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
 -- {{{ Run XMonad
 
 main = do
     dzen    <- spawnPipe myStatusBar
     conky   <- spawnPipe myConkyBar
+<<<<<<< HEAD
     xmonad $ withUrgencyHookC NoUrgencyHook (urgencyConfig { suppressWhen = Focused }) defaultConfig {
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
 
         -- simple stuff
           terminal           = myTerminal
@@ -212,17 +233,21 @@ myWorkspaces            = clickable . (map dzenEscape) $ nWorkspaces 9 ["web", "
 
   where nWorkspaces n []= map show [1 .. n]
         nWorkspaces n l = init l ++ map show [length l .. n] ++ [last l]
+<<<<<<< HEAD
         clickable l     = [ "^ca(1,xdotool key super+" ++ show (n) ++ ")" ++ ws ++ "^ca()"
                           | (i,ws) <- zip [1..] l
                           , let n = if i == 10 then 0 else i
                           ]
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
 
 
 myTerminal              = "urxvtc"
 
 myModMask               = mod4Mask
 
+<<<<<<< HEAD
 myFocusFollowsMouse     = True
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
 
 myBorderWidth           = 2
 myNormalBorderColor     = "#000000"
@@ -234,6 +259,7 @@ myFocusedBorderColor    = "#555555"
 
 -- Statusbar with workspaces, layout and title
 myStatusBar = "dzen2 -x 0   -y 0 -h 18 -ta l -fg '" ++ myDzenFGColor ++ 
+<<<<<<< HEAD
               "' -bg '" ++ myNormalBGColor ++ "' -fn '" ++ myFont ++ "' -w 670"
 
 myConkyBar  = "conky -c ~/.conkytoprc | dzen2 -x 670 -y 0 -h 18 -ta r -fg '" ++ myDzenFGColor ++
@@ -242,6 +268,7 @@ myConkyBar  = "conky -c ~/.conkytoprc | dzen2 -x 670 -y 0 -h 18 -ta r -fg '" ++ 
 -- Colors, font and iconpath definitions:
 myFont = "-*-snap-normal-r-normal-*-*-*-*-*-*-*-*-*" -- change, if you dont have artwiz fonts
 myIconDir = "/home/nils/.dzen" -- get icons at http://www.n-sch.de/xmonad/icons.zip
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
 myDzenFGColor = "#555555"
 myDzenBGColor = ""
 myNormalFGColor = "#77e000"
@@ -255,11 +282,13 @@ mySeperatorColor = "#555555"
 
 -- LogHook-Settings
 myLogHook h = defaultPP
+<<<<<<< HEAD
     { ppCurrent	    = dzenColor myNormalFGColor myNormalBGColor . pad . ((++) $ "^i(" ++ myIconDir ++ "/corner.xbm)") -- current workspace
     , ppVisible	    = dzenColor "lightgreen" ""                 . pad                               -- visible workspaces on other screens
     , ppHidden	    = dzenColor "white" ""                      . pad . ((++) $ "^i(" ++ myIconDir ++ "/corner.xbm)") -- hidden workspaces with apps
     , ppHiddenNoWindows     = dzenColor "#444444"  ""           . pad                               -- empty workspaces
     -- , ppHiddenNoWindows     = const ""                                                              -- hide empty workspaces
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
     , ppUrgent	    = dzenColor "" myUrgentBGColor                                                  -- urgent workspaces
     , ppTitle       = dzenColor myNormalFGColor ""              . pad . dzenEscape                  -- title of selected window
     , ppWsSep       = ""                                                                            -- workspace seperator
@@ -268,6 +297,7 @@ myLogHook h = defaultPP
     -- Layout icons
     , ppLayout      = dzenColor myNormalFGColor "" .
         (\ x -> case x of
+<<<<<<< HEAD
                      "ResizableTall"                    -> pad $ "^i(" ++ myIconDir ++ "/layout-tall-right.xbm)"
                      "Mirror ResizableTall"             -> pad $ "^i(" ++ myIconDir ++ "/layout-mirror-bottom.xbm)"
                      "Full"                             -> pad $ "^i(" ++ myIconDir ++ "/layout-full.xbm)"
@@ -276,6 +306,7 @@ myLogHook h = defaultPP
                      "IM Mirror ResizableTall"          -> pad $ "^i(" ++ myIconDir ++ "/layout-im-mirror.xbm)"
                      "IM Full"                          -> pad $ "^i(" ++ myIconDir ++ "/layout-im-full.xbm)"
                      "IM ReflectX IM Full"              -> pad $ "^i(" ++ myIconDir ++ "/layout-gimp.xbm)"
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
                      _                                  -> pad x
         )
 
@@ -305,6 +336,7 @@ myManageHook = composeAll . concat $
 
     -- Workspaces
     -- Be carefull with (!!) - if n is too big xmonad crashes!
+<<<<<<< HEAD
     -- , [ className =? "Firefox"          --> doF (focusOn 0) ] -- (liftM2 (.) W.view W.shift $ myWorkspaces !! 0) ]
     , [ className =? "Opera"            --> doF (focusOn 0) ] -- (liftM2 (.) W.view W.shift $ myWorkspaces !! 0) ]
     , [ className =? "Xchat"            --> doF (focusOn 1) ] -- (liftM2 (.) W.view W.shift $ myWorkspaces !! 1) ]
@@ -317,12 +349,14 @@ myManageHook = composeAll . concat $
         myTFloats = ["Schriftart auswählen", "Choose a directory"]
         qa /=? a  = fmap not (qa =? a)
         focusOn i = W.shift $ myWorkspaces !! i
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
 
 
 -- }}}
 
 -- {{{ Key & Mouse
 
+<<<<<<< HEAD
 myKeys conf = mkKeymap conf $
 
     -- General moving & stuff
@@ -385,10 +419,12 @@ myKeys conf = mkKeymap conf $
     , ("M-S-r", spawn "exec killall conky" >> restart "xmonad" True)
     -- Quit XMonad
     , ("M-C-<Backspace>", io $ exitWith ExitSuccess)
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
     ]
     ++
 
     -- Applications to run
+<<<<<<< HEAD
     [ ("M-<F1>",    spawn myTerminal)
     , ("M-<F2>",    spawn "exe=`dmenu_path | dmenu` && eval \"exec $exe\"") -- launch dmenu
     , ("M-<F3>",    spawn "exec thunar")
@@ -400,10 +436,12 @@ myKeys conf = mkKeymap conf $
     , ("M-S-<F4>",  runOrRaise   "liferea" (className =? "Liferea"))
     , ("M-S-<F7>",  myRunOrRaise (myTerminal ++ " -name abook -e abook ") (resource =? "abook"))
     , ("M-S-<F8>",  runOrRaise   "gmpc" (className =? "Gmpc"))
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
     ]
     ++
 
     -- Multimedia keys
+<<<<<<< HEAD
     [ ("<XF86AudioMute>",        spawn "exec ossvol -t")
     , ("<XF86AudioRaiseVolume>", spawn "exec ossvol -i 1")
     , ("<XF86AudioLowerVolume>", spawn "exec ossvol -d 1")
@@ -433,13 +471,16 @@ myKeys conf = mkKeymap conf $
         myRunOrRaise cmd qry = ifWindow qry raiseHook (spawn cmd) -- needed for terminal applications
         myCycleRecentWS = let options w = map (W.view `flip` w) (hiddenTags w)
                           in cycleWindowSets options [xK_Super_L] xK_Tab xK_q
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
 
 
 myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 
     [ ((modMask, button1), (\w -> focus w >> mouseMoveWindow w >> windows W.shiftMaster)) -- Set the window to floating mode and move by dragging
+<<<<<<< HEAD
     , ((modMask, button2), (\w -> focus w >> sendMessage ToggleStruts >> sendMessage ToggleLayout)) -- Toggle fullscreen
     --, ((modMask, button2), (\w -> focus w >> windows W.shiftMaster)) -- Raise the window to the top of the stack
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
     , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w >> windows W.shiftMaster)) -- Set the window to floating mode and resize by dragging
     , ((modMask, button4), (\_ -> prevWS)) -- previous Workspace
     , ((modMask, button5), (\_ -> nextWS)) -- next Workspace
@@ -450,6 +491,7 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 
 -- {{{ Layouts
 
+<<<<<<< HEAD
 myLayout = smartBorders . avoidStruts . toggleLayouts Full $
 
     -- Layouts for workspaces
@@ -463,6 +505,7 @@ myLayout = smartBorders . avoidStruts . toggleLayouts Full $
     tiled       = {- layoutHints $ -} ResizableTall 1 (3/100) (2/3) []
 
     myIM        = withIM (0.15) (Role "buddy_list") $ Grid ||| Mirror tiled ||| tiled ||| Full -- Pidgin buddy list
+>>>>>>> 565d6b5ce6fdb52831f748a4c3abb38a9ec189dc
     gimp        = withIM (0.15) (Role "gimp-toolbox") $
                   reflectHoriz $
                   withIM (0.21) (Role "gimp-dock") Full
