@@ -121,10 +121,11 @@ import XMonad
 
 import Data.Monoid
 import Data.Maybe (fromMaybe) 
+import Data.Ratio ((%))
 import System.IO
 import System.Exit
 
-import Control.Monad (liftM2)
+import Control.Monad (liftM2, ap)
 
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
@@ -167,7 +168,6 @@ import XMonad.Layout.Grid
 import XMonad.Layout.NoBorders
 import XMonad.Layout.ThreeColumns
 import XMonad.Layout.IM
-import Data.Ratio ((%))
 
 -- }}}
 
@@ -195,18 +195,22 @@ main = do
         , layoutHook         = myLayout
         , manageHook         = myManageHook
         , handleEventHook    = myEventHook
-        , logHook            = do
-            dynamicLogWithPP (myLogHook dzen)
-            fadeInactiveLogHook 0xdddddddd
+        , logHook            = myLogHook dzen
         , startupHook        = myStartupHook
 
     }
 
 -- }}}
 
+
 -- {{{ Settings
 
-myWorkspaces            :: [String]
+myTerminal              = "urxvtc"
+
+myModMask               = mod4Mask
+
+myFocusFollowsMouse     = True
+
 myWorkspaces            = clickable . (map dzenEscape) $ nWorkspaces 9 ["web", "irc", "com"]
 
   where nWorkspaces n []= map show [1 .. n]
@@ -216,109 +220,64 @@ myWorkspaces            = clickable . (map dzenEscape) $ nWorkspaces 9 ["web", "
                           , let n = if i == 10 then 0 else i
                           ]
 
+-- }}}
 
-myTerminal              = "urxvtc"
+-- {{{ Appearance
 
-myModMask               = mod4Mask
-
-myFocusFollowsMouse     = True
-
+-- Borders & Separators
 myBorderWidth           = 2
 myNormalBorderColor     = "#000000"
 myFocusedBorderColor    = "#555555"
 
--- }}}
+mySep                   = "|"
+myWorkspaceSep          = ""
 
--- {{{ Log hook
+-- Font - change, if you dont have artwiz fonts
+myFont                  = "-*-snap-*-*-*-*-*-*-*-*-*-*-*-*"
 
--- Statusbar with workspaces, layout and title
-myStatusBar = "dzen2 -x 0   -y 0 -h 18 -ta l -fg '" ++ myDzenFGColor ++ 
-              "' -bg '" ++ myNormalBGColor ++ "' -fn '" ++ myFont ++ "' -w 670"
+-- Icons
+-- get icons at http://www.n-sch.de/xmonad/icons.zip
+myIconDir                           = "/home/nils/.dzen"
 
-myConkyBar  = "conky -c ~/.conkytoprc | dzen2 -x 670 -y 0 -h 18 -ta r -fg '" ++ myDzenFGColor ++
-              "' -bg '" ++ myNormalBGColor ++ "' -fn '" ++ myFont ++ "' -w 770"
+myIcons "ResizableTall"             = Just "layout-tall-right.xbm"
+myIcons "Mirror ResizableTall"      = Just "layout-mirror-bottom.xbm"
+myIcons "Full"                      = Just "layout-full.xbm"
+myIcons "IM Grid"                   = Just "layout-im.xbm"
+myIcons "IM ResizableTall"          = Just "layout-im-tall.xbm"
+myIcons "IM Mirror ResizableTall"   = Just "layout-im-mirror.xbm"
+myIcons "IM Full"                   = Just "layout-im-full.xbm"
+myIcons "IM ReflectX IM Full"       = Just "layout-gimp.xbm"
 
--- Colors, font and iconpath definitions:
-myFont = "-*-snap-normal-r-normal-*-*-*-*-*-*-*-*-*" -- change, if you dont have artwiz fonts
-myIconDir = "/home/nils/.dzen" -- get icons at http://www.n-sch.de/xmonad/icons.zip
-myDzenFGColor = "#555555"
-myDzenBGColor = ""
-myNormalFGColor = "#77e000"
-myNormalBGColor = "#000000"
-myFocusedFGColor = "#f0f0f0"
-myFocusedBGColor = "#333333"
-myUrgentFGColor = "#0099ff"
-myUrgentBGColor = "#991133"
-mySeperatorColor = "#555555"
+myIcons _                           = Nothing
 
 
--- LogHook-Settings
-myLogHook h = defaultPP
-    { ppCurrent	    = dzenColor myNormalFGColor myNormalBGColor . pad . ((++) $ "^i(" ++ myIconDir ++ "/corner.xbm)") -- current workspace
-    , ppVisible	    = dzenColor "lightgreen" ""                 . pad                               -- visible workspaces on other screens
-    , ppHidden	    = dzenColor "white" ""                      . pad . ((++) $ "^i(" ++ myIconDir ++ "/corner.xbm)") -- hidden workspaces with apps
-    , ppHiddenNoWindows     = dzenColor "#444444"  ""           . pad                               -- empty workspaces
-    -- , ppHiddenNoWindows     = const ""                                                              -- hide empty workspaces
-    , ppUrgent	    = dzenColor "" myUrgentBGColor                                                  -- urgent workspaces
-    , ppTitle       = dzenColor myNormalFGColor ""              . pad . dzenEscape                  -- title of selected window
-    , ppWsSep       = ""                                                                            -- workspace seperator
-    , ppSep         = dzenEscape "|"                                                                -- workspace/layout/title seperator
+-- Colors:
 
-    -- Layout icons
-    , ppLayout      = dzenColor myNormalFGColor "" .
-        (\ x -> case x of
-                     "ResizableTall"                    -> pad $ "^i(" ++ myIconDir ++ "/layout-tall-right.xbm)"
-                     "Mirror ResizableTall"             -> pad $ "^i(" ++ myIconDir ++ "/layout-mirror-bottom.xbm)"
-                     "Full"                             -> pad $ "^i(" ++ myIconDir ++ "/layout-full.xbm)"
-                     "IM Grid"                          -> pad $ "^i(" ++ myIconDir ++ "/layout-im.xbm)"
-                     "IM ResizableTall"                 -> pad $ "^i(" ++ myIconDir ++ "/layout-im-tall.xbm)"
-                     "IM Mirror ResizableTall"          -> pad $ "^i(" ++ myIconDir ++ "/layout-im-mirror.xbm)"
-                     "IM Full"                          -> pad $ "^i(" ++ myIconDir ++ "/layout-im-full.xbm)"
-                     "IM ReflectX IM Full"              -> pad $ "^i(" ++ myIconDir ++ "/layout-gimp.xbm)"
-                     _                                  -> pad x
-        )
+myDzenFGColor           = "#555555"
+myDzenBGColor           = ""
 
-	, ppOutput      = hPutStrLn h
-    }
+myNormalFGColor         = "#e66900" -- "#77e000"
+myNormalBGColor         = "black" -- "#000000"
 
--- }}}
+myFocusedFGColor        = "#77f000" -- "#f0f0f0"
+myFocusedBGColor        = "#333333"
 
--- {{{ Other hooks
+myUrgentFGColor         = "#0099ff"
+myUrgentBGColor         = "#991133"
 
--- Event hook
-myEventHook = const . return $ All True
+myVisibleFGColor        = "white"
+myVisibleBGColor        = ""
 
--- Startup hook
-myStartupHook = setWMName "LG3D"
+myHiddenFGColor         = "#e66900" -- "white"
+myHiddenBGColor         = ""
 
--- Manage hook
-myManageHook = composeAll . concat $
+myEmptyFGColor          = "#444444"
+myEmptyBGColor          = ""
 
-    -- Float apps
-    [ [ className =? c                  --> doCenterFloat | c <- myCFloats    ]
-    , [ resource  =? r                  --> doCenterFloat | r <- myRFloats    ]
-    , [ title     =? t                  --> doCenterFloat | t <- myTFloats    ]
+mySeperatorColor        = "darkblue" -- "#555555"
+myBorderColor           = "#3333ff"
 
-    -- "Real" fullscreen
-    , [ isFullscreen                    --> doFullFloat ]
-
-    -- Workspaces
-    -- Be carefull with (!!) - if n is too big xmonad crashes!
-    -- , [ className =? "Firefox"          --> doF (focusOn 0) ] -- (liftM2 (.) W.view W.shift $ myWorkspaces !! 0) ]
-    , [ className =? "Opera"            --> doF (focusOn 0) ] -- (liftM2 (.) W.view W.shift $ myWorkspaces !! 0) ]
-    , [ className =? "Xchat"            --> doF (focusOn 1) ] -- (liftM2 (.) W.view W.shift $ myWorkspaces !! 1) ]
-    , [ resource  =? "irssi"            --> doF (focusOn 1) ]
-    , [ className =? "Pidgin"           --> doF (W.shift $ last myWorkspaces) ]
-    ]
-
-  where myCFloats = ["Wine", "Switch2"]
-        myRFloats = ["Dialog", "Download"]
-        myTFloats = ["Schriftart auswählen", "Choose a directory"]
-        qa /=? a  = fmap not (qa =? a)
-        focusOn i = W.shift $ myWorkspaces !! i
-
-
--- }}}
+-- }}} Appearance
 
 -- {{{ Key & Mouse
 
@@ -444,6 +403,84 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask, button5), (\_ -> nextWS)) -- next Workspace
 
     ]
+
+-- }}}
+
+
+-- {{{ Log hook
+
+-- Statusbar with workspaces, layout and title
+myStatusBar = "dzen2 -x 0   -y 0 -h 18 -ta l -fg '" ++ myDzenFGColor ++ 
+              "' -bg '" ++ myNormalBGColor ++ "' -fn '" ++ myFont ++ "' -w 670"
+
+myConkyBar  = "conky -c ~/.xmonad/conkytoprc | dzen2 -x 670 -y 0 -h 18 -ta r -fg '" ++ myDzenFGColor ++
+              "' -bg '" ++ myNormalBGColor ++ "' -fn '" ++ myFont ++ "' -w 770"
+
+-- LogHook
+myLogHook dzen = do
+    fadeInactiveLogHook 0xdddddddd
+    dynamicLogWithPP $ defaultPP {
+
+        -- current workspace
+          ppCurrent	        = dzenColor myFocusedFGColor myFocusedBGColor   . pad . ((++) $ "^i(" ++ myIconDir ++ "/corner.xbm)")
+        -- visible workspaces on other screens
+        , ppVisible	        = dzenColor myVisibleFGColor myVisibleBGColor   . pad                              
+        -- hidden workspaces with apps
+        , ppHidden	        = dzenColor myHiddenFGColor  myHiddenBGColor    . pad . ((++) $ "^i(" ++ myIconDir ++ "/corner.xbm)")
+        -- empty workspaces
+        , ppHiddenNoWindows = dzenColor myEmptyFGColor   myEmptyBGColor     . pad                              
+        -- urgent workspaces
+        , ppUrgent	        = dzenColor myUrgentFGColor  myUrgentBGColor                                                 
+        -- title of selected window
+        , ppTitle           = dzenColor myNormalFGColor  myNormalBGColor    . pad . dzenEscape                 
+        -- workspace seperator
+        , ppWsSep           = dzenEscape myWorkspaceSep
+        -- workspace/layout/title seperator
+        , ppSep             = dzenEscape mySep
+
+        -- Layout icons
+        , ppLayout          = dzenColor myNormalFGColor myNormalBGColor     . pad . loadIcons
+
+	    , ppOutput          = hPutStrLn dzen
+        }
+  where loadIcons s = fromMaybe s $ myIcons s >>= \icon -> return $ "^i(" ++ myIconDir ++ "/" ++ icon ++ ")"
+
+-- }}}
+
+-- {{{ Evenet, Startup and Manage hook
+
+-- Event hook
+myEventHook = const . return $ All True
+
+-- Startup hook
+myStartupHook = setWMName "LG3D"
+
+-- Manage hook
+myManageHook = composeAll . concat $
+
+    -- Float apps
+    [ [ className =? c                  --> doCenterFloat | c <- myCFloats    ]
+    , [ resource  =? r                  --> doCenterFloat | r <- myRFloats    ]
+    , [ title     =? t                  --> doCenterFloat | t <- myTFloats    ]
+
+    -- "Real" fullscreen
+    , [ isFullscreen                    --> doFullFloat ]
+
+    -- Workspaces
+    -- Be carefull with (!!) - if n is too big xmonad crashes!
+    -- , [ className =? "Firefox"          --> doF (focusOn 0) ] -- (liftM2 (.) W.view W.shift $ myWorkspaces !! 0) ]
+    , [ className =? "Opera"            --> doF (focusOn 0) ] -- (liftM2 (.) W.view W.shift $ myWorkspaces !! 0) ]
+    , [ className =? "Xchat"            --> doF (focusOn 1) ] -- (liftM2 (.) W.view W.shift $ myWorkspaces !! 1) ]
+    , [ resource  =? "irssi"            --> doF (focusOn 1) ]
+    , [ className =? "Pidgin"           --> doF (W.shift $ last myWorkspaces) ]
+    ]
+
+  where myCFloats = ["Wine", "Switch2"]
+        myRFloats = ["Dialog", "Download"]
+        myTFloats = ["Schriftart auswählen", "Choose a directory"]
+        qa /=? a  = fmap not (qa =? a)
+        focusOn i = W.shift $ myWorkspaces !! i
+
 
 -- }}}
 
