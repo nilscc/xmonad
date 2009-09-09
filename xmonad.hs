@@ -161,7 +161,6 @@ import XMonad.Layout.PerWorkspace
 import XMonad.Layout.LayoutHints
 import XMonad.Layout.ToggleLayouts
 import XMonad.Layout.SimplestFloat
---import XMonad.Layout.SimpleDecoration
 
 import XMonad.Layout.ResizableTile
 import XMonad.Layout.Grid
