@@ -120,7 +120,7 @@
 import XMonad
 
 import Data.Monoid
-import Data.Maybe (fromMaybe) 
+import Data.Maybe (fromMaybe)
 import Data.Ratio ((%))
 import System.IO
 import System.Exit
@@ -132,7 +132,7 @@ import qualified Data.Map        as M
 import qualified Data.List       as L
 
 -- usefull stuff
-import Graphics.X11.ExtraTypes.XF86 
+import Graphics.X11.ExtraTypes.XF86
 
 -- Actions
 import XMonad.Actions.CycleWS
@@ -202,7 +202,6 @@ main = do
 
 -- }}}
 
-
 -- {{{ Settings
 
 myTerminal              = "urxvtc"
@@ -227,7 +226,7 @@ myWorkspaces            = clickable . (map dzenEscape) $ nWorkspaces 9 ["web", "
 -- Borders & Separators
 myBorderWidth           = 2
 myNormalBorderColor     = "#000000"
-myFocusedBorderColor    = "#555555"
+myFocusedBorderColor    = "#e66900"
 
 mySep                   = "|"
 myWorkspaceSep          = ""
@@ -238,6 +237,7 @@ myFont                  = "-*-snap-*-*-*-*-*-*-*-*-*-*-*-*"
 -- Icons
 -- get icons at http://www.n-sch.de/xmonad/icons.zip
 myIconDir                           = "/home/nils/.dzen"
+myWsIcon                            = "corner.xbm"
 
 myIcons "ResizableTall"             = Just "layout-tall-right.xbm"
 myIcons "Mirror ResizableTall"      = Just "layout-mirror-bottom.xbm"
@@ -262,7 +262,7 @@ myNormalBGColor         = "black" -- "#000000"
 myFocusedFGColor        = "#77f000" -- "#f0f0f0"
 myFocusedBGColor        = "#333333"
 
-myUrgentFGColor         = "#0099ff"
+myUrgentFGColor         = "white" -- why is this not working?
 myUrgentBGColor         = "#991133"
 
 myVisibleFGColor        = "white"
@@ -284,7 +284,7 @@ myBorderColor           = "#3333ff"
 myKeys conf = mkKeymap conf $
 
     -- General moving & stuff
-    [ ("M-<Escape>", kill)                           -- close focused window 
+    [ ("M-<Escape>", kill)                           -- close focused window
 
     , ("M-<Space>", sendMessage NextLayout)     -- Rotate through the available layout algorithms
     , ("M-S-<Space>", setLayout $ XMonad.layoutHook conf) --  Reset the layouts on the current workspace to default
@@ -406,13 +406,13 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 
 -- }}}
 
-
--- {{{ Log hook
+-- {{{ Statusbars and LogHook
 
 -- Statusbar with workspaces, layout and title
-myStatusBar = "dzen2 -x 0   -y 0 -h 18 -ta l -fg '" ++ myDzenFGColor ++ 
+myStatusBar = "dzen2 -x 0   -y 0 -h 18 -ta l -fg '" ++ myDzenFGColor ++
               "' -bg '" ++ myNormalBGColor ++ "' -fn '" ++ myFont ++ "' -w 670"
 
+-- Conky bar
 myConkyBar  = "conky -c ~/.xmonad/conkytoprc | dzen2 -x 670 -y 0 -h 18 -ta r -fg '" ++ myDzenFGColor ++
               "' -bg '" ++ myNormalBGColor ++ "' -fn '" ++ myFont ++ "' -w 770"
 
@@ -420,34 +420,28 @@ myConkyBar  = "conky -c ~/.xmonad/conkytoprc | dzen2 -x 670 -y 0 -h 18 -ta r -fg
 myLogHook dzen = do
     fadeInactiveLogHook 0xdddddddd
     dynamicLogWithPP $ defaultPP {
+          ppLayout          = dzenColor  myNormalFGColor  myNormalBGColor    . pad . loadIcons
+        , ppTitle           = dzenColor  myNormalFGColor  myNormalBGColor    . pad . dzenEscape
 
-        -- current workspace
-          ppCurrent	        = dzenColor myFocusedFGColor myFocusedBGColor   . pad . ((++) $ "^i(" ++ myIconDir ++ "/corner.xbm)")
-        -- visible workspaces on other screens
-        , ppVisible	        = dzenColor myVisibleFGColor myVisibleBGColor   . pad                              
-        -- hidden workspaces with apps
-        , ppHidden	        = dzenColor myHiddenFGColor  myHiddenBGColor    . pad . ((++) $ "^i(" ++ myIconDir ++ "/corner.xbm)")
-        -- empty workspaces
-        , ppHiddenNoWindows = dzenColor myEmptyFGColor   myEmptyBGColor     . pad                              
-        -- urgent workspaces
-        , ppUrgent	        = dzenColor myUrgentFGColor  myUrgentBGColor                                                 
-        -- title of selected window
-        , ppTitle           = dzenColor myNormalFGColor  myNormalBGColor    . pad . dzenEscape                 
-        -- workspace seperator
+        , ppCurrent	        = dzenColor  myFocusedFGColor myFocusedBGColor   . pad . cornerIcon
+        , ppVisible	        = dzenColor  myVisibleFGColor myVisibleBGColor   . pad
+        , ppHidden	        = dzenColor  myHiddenFGColor  myHiddenBGColor    . pad . cornerIcon
+        , ppHiddenNoWindows = dzenColor  myEmptyFGColor   myEmptyBGColor     . pad
+        , ppUrgent	        = dzenColor  myUrgentFGColor  myUrgentBGColor    . pad . cornerIcon -- . strip
+
         , ppWsSep           = dzenEscape myWorkspaceSep
-        -- workspace/layout/title seperator
         , ppSep             = dzenEscape mySep
 
-        -- Layout icons
-        , ppLayout          = dzenColor myNormalFGColor myNormalBGColor     . pad . loadIcons
-
-	    , ppOutput          = hPutStrLn dzen
+	    , ppOutput          = hPutStrLn  dzen
         }
+
   where loadIcons s = fromMaybe s $ myIcons s >>= \icon -> return $ "^i(" ++ myIconDir ++ "/" ++ icon ++ ")"
+        cornerIcon  = (++) $ "^i(" ++ myIconDir ++ "/" ++ myWsIcon ++ ")"
+        strip       = tail . init . dzenStrip
 
 -- }}}
 
--- {{{ Evenet, Startup and Manage hook
+-- {{{ Event, Startup and Manage hook
 
 -- Event hook
 myEventHook = const . return $ All True
