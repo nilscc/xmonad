@@ -236,7 +236,7 @@ myFont                  = "-*-snap-*-*-*-*-*-*-*-*-*-*-*-*"
 
 -- Icons
 -- get icons at http://www.n-sch.de/xmonad/icons.zip
-myIconDir                           = "/home/nils/.dzen"
+myIconDir                           = "/home/nils/.xmonad/icons"
 myWsIcon                            = "corner.xbm"
 
 myIcons "ResizableTall"             = Just "layout-tall-right.xbm"
