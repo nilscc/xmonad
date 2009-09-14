@@ -114,6 +114,7 @@
 -- }}}                                                              --
 ----------------------------------------------------------------------
 
+
 -- {{{ imports
 
 -- Core
@@ -131,9 +132,6 @@ import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
 import qualified Data.List       as L
 
--- usefull stuff
-import Graphics.X11.ExtraTypes.XF86
-
 -- Actions
 import XMonad.Actions.CycleWS
 import XMonad.Actions.CycleRecentWS
@@ -150,11 +148,10 @@ import XMonad.Util.EZConfig
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.DynamicLog
+import XMonad.Hooks.SetCursor
 import XMonad.Hooks.SetWMName
 import XMonad.Hooks.UrgencyHook
 import XMonad.Hooks.FadeInactive
-
-import XMonad.Hooks.ServerMode
 
 -- Layouts
 import XMonad.Layout.Reflect
@@ -262,7 +259,7 @@ myNormalBGColor         = "black" -- "#000000"
 myFocusedFGColor        = "#77f000" -- "#f0f0f0"
 myFocusedBGColor        = "#333333"
 
-myUrgentFGColor         = "white" -- why is this not working?
+myUrgentFGColor         = "white"
 myUrgentBGColor         = "#991133"
 
 myVisibleFGColor        = "white"
@@ -374,7 +371,7 @@ myKeys conf = mkKeymap conf $
 
     -- Control of workspaces
     -- Basicly M+1-0 and some modifiers. See the basic usage on top of this
-    -- file for more information.
+    -- file for more information
     [ (m ++ k, f i)
          | (i, k) <- zip ((\ws -> last ws : ws) . workspaces $ conf)
                          ("^" : map show ([1..9] ++ [0]))
@@ -447,34 +444,31 @@ myLogHook dzen = do
 myEventHook = const . return $ All True
 
 -- Startup hook
-myStartupHook = setWMName "LG3D"
+myStartupHook = do
+    setDefaultCursor 68
+    setWMName "LG3D"
 
 -- Manage hook
-myManageHook = composeAll . concat $
+myManageHook = composeAll $
 
     -- Float apps
-    [ [ className =? c                  --> doCenterFloat | c <- myCFloats    ]
-    , [ resource  =? r                  --> doCenterFloat | r <- myRFloats    ]
-    , [ title     =? t                  --> doCenterFloat | t <- myTFloats    ]
-
-    -- "Real" fullscreen
-    , [ isFullscreen                    --> doFullFloat ]
+    [ className =? c <||> resource =? r <||> title =? t --> doCenterFloat
+    | c <- ["Wine", "Switch2"]
+    , r <- ["Dialog", "Download"]
+    , t <- ["Schriftart auswählen", "Choose a directory"]
+    ] ++
 
     -- Workspaces
-    -- Be carefull with (!!) - if n is too big xmonad crashes!
-    -- , [ className =? "Firefox"          --> doF (focusOn 0) ] -- (liftM2 (.) W.view W.shift $ myWorkspaces !! 0) ]
-    , [ className =? "Opera"            --> doF (focusOn 0) ] -- (liftM2 (.) W.view W.shift $ myWorkspaces !! 0) ]
-    , [ className =? "Xchat"            --> doF (focusOn 1) ] -- (liftM2 (.) W.view W.shift $ myWorkspaces !! 1) ]
-    , [ resource  =? "irssi"            --> doF (focusOn 1) ]
-    , [ className =? "Pidgin"           --> doF (W.shift $ last myWorkspaces) ]
+    [ className =? "Opera"      --> moveTo 0
+    , className =? "Xchat"      --> moveTo 1
+    , resource  =? "irssi"      --> moveTo 1
+    , className =? "Pidgin"     --> moveTo (-1)
+
+    -- "Real" fullscreen
+    , isFullscreen              --> doFullFloat 
     ]
 
-  where myCFloats = ["Wine", "Switch2"]
-        myRFloats = ["Dialog", "Download"]
-        myTFloats = ["Schriftart auswählen", "Choose a directory"]
-        qa /=? a  = fmap not (qa =? a)
-        focusOn i = W.shift $ myWorkspaces !! i
-
+  where moveTo i = doF . W.shift $ if i == -1 then last myWorkspaces else myWorkspaces !! i
 
 -- }}}
 
@@ -483,7 +477,6 @@ myManageHook = composeAll . concat $
 myLayout = smartBorders . avoidStruts . toggleLayouts Full $
 
     -- Layouts for workspaces
-    -- onWorkspace (myWorkspaces !! 1) (Mirror tiled ||| tiled ||| Full) $
     onWorkspace (last myWorkspaces) myIM $
 
     -- Default
