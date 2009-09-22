@@ -223,7 +223,7 @@ myWorkspaces            = clickable . (map dzenEscape) $ nWorkspaces 9 ["web", "
 -- Borders & Separators
 myBorderWidth           = 2
 myNormalBorderColor     = "#000000"
-myFocusedBorderColor    = "#e66900"
+myFocusedBorderColor    = "#406020"
 
 mySep                   = "|"
 myWorkspaceSep          = ""
@@ -250,14 +250,14 @@ myIcons _                           = Nothing
 
 -- Colors:
 
-myDzenFGColor           = "#555555"
+myDzenFGColor           = "#303030"
 myDzenBGColor           = ""
 
-myNormalFGColor         = "#e66900" -- "#77e000"
+myNormalFGColor         = "#324c80" -- "#e66900" -- "#77e000"
 myNormalBGColor         = "black" -- "#000000"
 
-myFocusedFGColor        = "#77f000" -- "#f0f0f0"
-myFocusedBGColor        = "#333333"
+myFocusedFGColor        = "#b30a30" -- "#77f000" -- "#f0f0f0"
+myFocusedBGColor        = "#121212"
 
 myUrgentFGColor         = "white"
 myUrgentBGColor         = "#991133"
@@ -265,14 +265,11 @@ myUrgentBGColor         = "#991133"
 myVisibleFGColor        = "white"
 myVisibleBGColor        = ""
 
-myHiddenFGColor         = "#e66900" -- "white"
+myHiddenFGColor         = myNormalFGColor -- "#e66900" -- "white"
 myHiddenBGColor         = ""
 
 myEmptyFGColor          = "#444444"
 myEmptyBGColor          = ""
-
-mySeperatorColor        = "darkblue" -- "#555555"
-myBorderColor           = "#3333ff"
 
 -- }}} Appearance
 
@@ -452,7 +449,7 @@ myStartupHook = do
 myManageHook = composeAll $
 
     -- Float apps
-    [ className =? c <||> resource =? r <||> title =? t --> doCenterFloat
+    [ className =? c <||> resource =? r <||> title =? t <||> isDialog --> doCenterFloat
     | c <- ["Wine", "Switch2"]
     , r <- ["Dialog", "Download"]
     , t <- ["Schriftart auswählen", "Choose a directory"]

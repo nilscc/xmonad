@@ -17,19 +17,19 @@ mail_spool /home/nils/.mail/mails/uni/INBOX/
 # ${new_mails /home/nils/.mail/mails/familie/INBOX}\
 
 TEXT
-^fg(\#991133)\
+^fg(\#a10a30)\
 ^ca(1,.scripts/mpd_host -t -d)^i(.xmonad/icons/mpd.xbm) ${mpd_smart 50}^ca() \
 ^ca(1,.scripts/mpc_with_host prev)^i(.xmonad/icons/prev.xbm)^ca() \
 ^ca(1,.scripts/mpc_with_host toggle)^i(.xmonad/icons/pause.xbm)^ca() \
 ^ca(1,.scripts/mpc_with_host next)^i(.xmonad/icons/next.xbm)^ca() \
 \
-^fg()|^fg(\#74c44f) \
+^fg()|^fg(\#89b83f) \
 ^ca(1,xdotool key super+F7)\
 ${new_mails /home/nils/.mail/mails/nsch/INBOX}\
 /\
 ${new_mails /home/nils/.mail/mails/uni/INBOX}^ca() \
 \
-${if_empty ${battery_time}}${else}^fg()|^fg(\#3475aa) \
+${if_empty ${battery_time}}${else}^fg()|^fg(\#324c80) \
 ^i(.xmonad/icons/battery.xbm) \
 ${battery BAT0} \
 (${battery_time}) \
