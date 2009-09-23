@@ -166,6 +166,10 @@ import XMonad.Layout.NoBorders
 import XMonad.Layout.ThreeColumns
 import XMonad.Layout.IM
 
+
+
+import XMonad.Layout.Tabbed
+
 -- }}}
 
 -- {{{ Run XMonad
@@ -253,10 +257,10 @@ myIcons _                           = Nothing
 myDzenFGColor           = "#303030"
 myDzenBGColor           = ""
 
-myNormalFGColor         = "#324c80" -- "#e66900" -- "#77e000"
+myNormalFGColor         = "#77e000" -- "#324c80" -- "#e66900"
 myNormalBGColor         = "black" -- "#000000"
 
-myFocusedFGColor        = "#b30a30" -- "#77f000" -- "#f0f0f0"
+myFocusedFGColor        = "#f0f0f0" -- "#b30a30" -- "#77f000"
 myFocusedBGColor        = "#121212"
 
 myUrgentFGColor         = "white"
@@ -270,6 +274,25 @@ myHiddenBGColor         = ""
 
 myEmptyFGColor          = "#444444"
 myEmptyBGColor          = ""
+
+-- Tabbed theme:
+
+myTabbedTheme = Theme {
+
+      activeTextColor       = myFocusedFGColor
+    , activeColor           = myFocusedBGColor
+    , activeBorderColor     = myNormalBorderColor
+    , inactiveTextColor     = myNormalFGColor
+    , inactiveColor         = myNormalBGColor
+    , inactiveBorderColor   = myNormalBorderColor
+    , urgentTextColor       = myUrgentFGColor
+    , urgentColor           = myUrgentBGColor
+    , urgentBorderColor     = myNormalBorderColor
+    , fontName              = myFont
+    , decoWidth             = 200
+    , decoHeight            = 18
+
+}
 
 -- }}} Appearance
 
@@ -344,7 +367,8 @@ myKeys conf = mkKeymap conf $
     [ ("M-<F1>",    spawn myTerminal)
     , ("M-<F2>",    spawn "exe=`dmenu_path | dmenu` && eval \"exec $exe\"") -- launch dmenu
     , ("M-<F3>",    spawn "exec thunar")
-    , ("M-<F4>",    runOrRaise   "opera" (className =? "Opera"))
+    -- , ("M-<F4>",    runOrRaise   "opera" (className =? "Opera"))
+    , ("M-<F4>",    spawn "exec surf")
     , ("M-<F5>",    runOrRaise   "pidgin"  (className =? "Pidgin"))
     , ("M-<F6>",    myRunOrRaise (myTerminal ++ " -name irssi -e zsh -c \"screen -x || screen irssi\"") (resource =? "irssi"))
     , ("M-<F7>",    myRunOrRaise (myTerminal ++ " -name mutt -e mutt ") (resource =? "mutt"))
@@ -457,6 +481,7 @@ myManageHook = composeAll $
 
     -- Workspaces
     [ className =? "Opera"      --> moveTo 0
+    , className =? "surf"       --> moveTo 0
     , className =? "Xchat"      --> moveTo 1
     , resource  =? "irssi"      --> moveTo 1
     , className =? "Pidgin"     --> moveTo (-1)
@@ -474,6 +499,7 @@ myManageHook = composeAll $
 myLayout = smartBorders . avoidStruts . toggleLayouts Full $
 
     -- Layouts for workspaces
+    onWorkspace (head myWorkspaces) myBrowser $
     onWorkspace (last myWorkspaces) myIM $
 
     -- Default
@@ -483,6 +509,7 @@ myLayout = smartBorders . avoidStruts . toggleLayouts Full $
     tiled       = {- layoutHints $ -} ResizableTall 1 (3/100) (2/3) []
 
     myIM        = withIM (0.15) (Role "buddy_list") $ Grid ||| Mirror tiled ||| tiled ||| Full -- Pidgin buddy list
+    myBrowser   = tabbedBottom shrinkText myTabbedTheme ||| Grid
     gimp        = withIM (0.15) (Role "gimp-toolbox") $
                   reflectHoriz $
                   withIM (0.21) (Role "gimp-dock") Full
