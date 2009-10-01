@@ -143,6 +143,7 @@ import XMonad.Actions.WindowGo
 -- Utils
 import XMonad.Util.Run (spawnPipe)
 import XMonad.Util.EZConfig
+import XMonad.Util.WorkspaceCompare (getSortByIndex)
 
 -- Hooks
 import XMonad.Hooks.ManageDocks
@@ -266,7 +267,7 @@ myFocusedBGColor        = "#121212"
 myUrgentFGColor         = "white"
 myUrgentBGColor         = "#991133"
 
-myVisibleFGColor        = "white"
+myVisibleFGColor        = "#e66900"
 myVisibleBGColor        = ""
 
 myHiddenFGColor         = myNormalFGColor -- "#e66900" -- "white"
@@ -317,7 +318,7 @@ myKeys conf = mkKeymap conf $
     , ("M-w"  , windows W.focusMaster)          -- Move focus to the master window
     , ("M-S-w", windows W.shiftMaster)          -- Swap the focused window and the master window
     , ("M-e"  , moveTo Next EmptyWS)            -- View next empty workspace
-    , ("M-S-e", shiftTo Next EmptyWS)           -- View next empty workspace
+    , ("M-S-e", shiftTo' Next EmptyWS)          -- Move current window to next empty workspace
 
     , ("M-S-j", windows W.swapDown)             -- Swap the focused window with the next window
     , ("M-S-k", windows W.swapUp)               -- Swap the focused window with the previous window
@@ -360,27 +361,23 @@ myKeys conf = mkKeymap conf $
     , ("M-S-r", spawn "exec killall conky" >> restart "xmonad" True)
     -- Quit XMonad
     , ("M-C-<Backspace>", io $ exitWith ExitSuccess)
-    ]
-    ++
 
     -- Applications to run
-    [ ("M-<F1>",    spawn myTerminal)
+    , ("M-<F1>",    spawn myTerminal)
     , ("M-<F2>",    spawn "exe=`dmenu_path | dmenu` && eval \"exec $exe\"") -- launch dmenu
     , ("M-<F3>",    spawn "exec thunar")
-    -- , ("M-<F4>",    runOrRaise   "opera" (className =? "Opera"))
-    , ("M-<F4>",    spawn "exec surf")
+    , ("M-<F4>",    runOrRaise   "opera" (className =? "Opera"))
     , ("M-<F5>",    runOrRaise   "pidgin"  (className =? "Pidgin"))
     , ("M-<F6>",    myRunOrRaise (myTerminal ++ " -name irssi -e zsh -c \"screen -x || screen irssi\"") (resource =? "irssi"))
     , ("M-<F7>",    myRunOrRaise (myTerminal ++ " -name mutt -e mutt ") (resource =? "mutt"))
     , ("M-<F8>",    myRunOrRaise (myTerminal ++ " -name ncmpcpp -e ~/.scripts/ncmpcpp_with_host") (resource =? "ncmpcpp"))
+    , ("M-<F10>",   spawn "exec wicd-client -n")
     , ("M-S-<F4>",  runOrRaise   "liferea" (className =? "Liferea"))
     , ("M-S-<F7>",  myRunOrRaise (myTerminal ++ " -name abook -e abook ") (resource =? "abook"))
     , ("M-S-<F8>",  runOrRaise   "gmpc" (className =? "Gmpc"))
-    ]
-    ++
 
     -- Multimedia keys
-    [ ("<XF86AudioMute>",        spawn "exec ossvol -t")
+    , ("<XF86AudioMute>",        spawn "exec ossvol -t")
     , ("<XF86AudioRaiseVolume>", spawn "exec ossvol -i 1")
     , ("<XF86AudioLowerVolume>", spawn "exec ossvol -d 1")
     , ("<XF86AudioPlay>",        spawn "exec ~/.scripts/mpc_with_host toggle")
@@ -409,6 +406,7 @@ myKeys conf = mkKeymap conf $
         myRunOrRaise cmd qry = ifWindow qry raiseHook (spawn cmd) -- needed for terminal applications
         myCycleRecentWS = let options w = map (W.view `flip` w) (hiddenTags w)
                           in cycleWindowSets options [xK_Super_L] xK_Tab xK_q
+        shiftTo' dir t = findWorkspace getSortByIndex dir t 1 >>= windows . liftM2 (.) W.view W.shift
 
 
 myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
@@ -442,7 +440,7 @@ myLogHook dzen = do
         , ppTitle           = dzenColor  myNormalFGColor  myNormalBGColor    . pad . dzenEscape
 
         , ppCurrent	        = dzenColor  myFocusedFGColor myFocusedBGColor   . pad . cornerIcon
-        , ppVisible	        = dzenColor  myVisibleFGColor myVisibleBGColor   . pad
+        , ppVisible	        = dzenColor  myVisibleFGColor myVisibleBGColor   . pad . cornerIcon
         , ppHidden	        = dzenColor  myHiddenFGColor  myHiddenBGColor    . pad . cornerIcon
         , ppHiddenNoWindows = dzenColor  myEmptyFGColor   myEmptyBGColor     . pad
         , ppUrgent	        = dzenColor  myUrgentFGColor  myUrgentBGColor    . pad . cornerIcon -- . strip
@@ -481,7 +479,7 @@ myManageHook = composeAll $
 
     -- Workspaces
     [ className =? "Opera"      --> moveTo 0
-    , className =? "surf"       --> moveTo 0
+    -- , className =? "surf"       --> moveTo 0
     , className =? "Xchat"      --> moveTo 1
     , resource  =? "irssi"      --> moveTo 1
     , className =? "Pidgin"     --> moveTo (-1)
@@ -499,7 +497,7 @@ myManageHook = composeAll $
 myLayout = smartBorders . avoidStruts . toggleLayouts Full $
 
     -- Layouts for workspaces
-    onWorkspace (head myWorkspaces) myBrowser $
+    -- onWorkspace (head myWorkspaces) myBrowser $
     onWorkspace (last myWorkspaces) myIM $
 
     -- Default
@@ -509,7 +507,7 @@ myLayout = smartBorders . avoidStruts . toggleLayouts Full $
     tiled       = {- layoutHints $ -} ResizableTall 1 (3/100) (2/3) []
 
     myIM        = withIM (0.15) (Role "buddy_list") $ Grid ||| Mirror tiled ||| tiled ||| Full -- Pidgin buddy list
-    myBrowser   = tabbedBottom shrinkText myTabbedTheme ||| Grid
+    -- myBrowser   = tabbedBottom shrinkText myTabbedTheme ||| Grid
     gimp        = withIM (0.15) (Role "gimp-toolbox") $
                   reflectHoriz $
                   withIM (0.21) (Role "gimp-dock") Full
