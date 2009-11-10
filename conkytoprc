@@ -24,7 +24,7 @@ TEXT
 ^ca(1,.scripts/mpc_with_host toggle)^i(.xmonad/icons/pause.xbm)^ca() \
 ^ca(1,.scripts/mpc_with_host next)^i(.xmonad/icons/next.xbm)^ca() \
 \
-^fg()|^fg(\#89b83f) \
+^fg()|^fg(\#00FF00) \
 ^ca(1,xdotool key super+F7)\
 ${new_mails /home/nils/.mail/mails/nsch/INBOX}\
 /\

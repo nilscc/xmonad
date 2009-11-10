@@ -39,7 +39,7 @@
 -- Applications:                                                    --
 --                                                                  --
 -- M + F1               - Start urxvtc                              --
--- M + F2               - Start dmenu                               --
+-- M + F2               - Open RunOrRaise prompt                    --
 -- M + F3               - Start thunar                              --
 -- M + F4               - Start opera                               --
 -- M + F5               - Start irssi in urxvtc                     --
@@ -141,18 +141,21 @@ import XMonad.Actions.SinkAll
 import XMonad.Actions.WindowGo
 
 -- Utils
+import XMonad.Util.Cursor
 import XMonad.Util.Run (spawnPipe)
 import XMonad.Util.EZConfig
 import XMonad.Util.WorkspaceCompare (getSortByIndex)
+import XMonad.Util.Loggers
 
 -- Hooks
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.DynamicLog
-import XMonad.Hooks.SetCursor
 import XMonad.Hooks.SetWMName
 import XMonad.Hooks.UrgencyHook
 import XMonad.Hooks.FadeInactive
+import XMonad.Hooks.InsertPosition
+import XMonad.Hooks.Place
 
 -- Layouts
 import XMonad.Layout.Reflect
@@ -166,19 +169,28 @@ import XMonad.Layout.Grid
 import XMonad.Layout.NoBorders
 import XMonad.Layout.ThreeColumns
 import XMonad.Layout.IM
-
-
-
 import XMonad.Layout.Tabbed
+
+-- Prompt
+import XMonad.Prompt
+import XMonad.Prompt.Shell
+
+
+
+import XMonad.Config.Kde
+-- My stuff:
+-- import Control.Concurrent (forkIO)
+-- import XMonad.Util.StatusBar
 
 -- }}}
 
 -- {{{ Run XMonad
 
 main = do
-    dzen    <- spawnPipe myStatusBar
-    conky   <- spawnPipe myConkyBar
-    xmonad $ withUrgencyHookC NoUrgencyHook (urgencyConfig { suppressWhen = Focused }) defaultConfig {
+    dzen1   <- spawnPipe dzenWorkspace
+    dzen2   <- spawnPipe dzenState
+    -- runStatusbar (defaultStatusBar dzenState)
+    xmonad . withUrgencyHookC NoUrgencyHook (urgencyConfig { suppressWhen = Focused }) $ kde4Config {
 
         -- simple stuff
           terminal           = myTerminal
@@ -197,7 +209,7 @@ main = do
         , layoutHook         = myLayout
         , manageHook         = myManageHook
         , handleEventHook    = myEventHook
-        , logHook            = myLogHook dzen
+        , logHook            = myLogHook dzen1
         , startupHook        = myStartupHook
 
     }
@@ -212,7 +224,7 @@ myModMask               = mod4Mask
 
 myFocusFollowsMouse     = True
 
-myWorkspaces            = clickable . (map dzenEscape) $ nWorkspaces 9 ["web", "irc", "com"]
+myWorkspaces            = clickable . (map dzenEscape) $ nWorkspaces 9 ["web", "irc", "im"]
 
   where nWorkspaces n []= map show [1 .. n]
         nWorkspaces n l = init l ++ map show [length l .. n] ++ [last l]
@@ -255,26 +267,26 @@ myIcons _                           = Nothing
 
 -- Colors:
 
-myDzenFGColor           = "#303030"
-myDzenBGColor           = ""
+myDzenFGColor    = "#303030"
+myDzenBGColor    = ""
 
-myNormalFGColor         = "#77e000" -- "#324c80" -- "#e66900"
-myNormalBGColor         = "black" -- "#000000"
+myNormalFGColor  = "#00FF00" -- "#77e000" -- "#324c80" -- "#e66900"
+myNormalBGColor  = "black" -- "#000000"
 
-myFocusedFGColor        = "#f0f0f0" -- "#b30a30" -- "#77f000"
-myFocusedBGColor        = "#121212"
+myFocusedFGColor = "#f0f0f0" -- "#b30a30" -- "#77f000"
+myFocusedBGColor = "#121212"
 
-myUrgentFGColor         = "white"
-myUrgentBGColor         = "#991133"
+myUrgentFGColor  = "white"
+myUrgentBGColor  = "#991133"
 
-myVisibleFGColor        = "#e66900"
-myVisibleBGColor        = ""
+myVisibleFGColor = "#e66900"
+myVisibleBGColor = ""
 
-myHiddenFGColor         = myNormalFGColor -- "#e66900" -- "white"
-myHiddenBGColor         = ""
+myHiddenFGColor  = myNormalFGColor -- "#e66900" -- "white"
+myHiddenBGColor  = ""
 
-myEmptyFGColor          = "#444444"
-myEmptyBGColor          = ""
+myEmptyFGColor   = "#444444"
+myEmptyBGColor   = ""
 
 -- Tabbed theme:
 
@@ -293,6 +305,18 @@ myTabbedTheme = Theme {
     , decoWidth             = 200
     , decoHeight            = 18
 
+}
+
+-- Prompt config
+-- , ("M-<F2>",    spawn "exec dmenu_run -r -i -nb '#222222' -nf '#888888' -sf '#ffffff' -sb '#5a8eff' -h 80 -w 400 -y 18 -fn 'xft:Droid Sans:pixelsize=9'")
+myPromptConfig = defaultXPConfig {
+      font = myFont
+    , bgColor = "#000000"
+    , fgColor = "#77e000"
+    , fgHLight = "#f0f0f0"
+    , bgHLight = "#121212"
+    , promptBorderWidth = 0
+    , position = Top
 }
 
 -- }}} Appearance
@@ -360,14 +384,22 @@ myKeys conf = mkKeymap conf $
     -- Restart XMonad, take care of conky
     , ("M-S-r", spawn "exec killall conky" >> restart "xmonad" True)
     -- Quit XMonad
-    , ("M-C-<Backspace>", io $ exitWith ExitSuccess)
+    -- , ("M-C-<Backspace>", io $ exitWith ExitSuccess)
+    , ("M-C-<Backspace>", spawn "dbus-send --print-reply --dest=org.kde.ksmserver /KSMServer org.kde.KSMServerInterface.logout int32:1 int32:0 int32:1")
+
 
     -- Applications to run
     , ("M-<F1>",    spawn myTerminal)
-    , ("M-<F2>",    spawn "exe=`dmenu_path | dmenu` && eval \"exec $exe\"") -- launch dmenu
-    , ("M-<F3>",    spawn "exec thunar")
-    , ("M-<F4>",    runOrRaise   "opera" (className =? "Opera"))
-    , ("M-<F5>",    runOrRaise   "pidgin"  (className =? "Pidgin"))
+    -- , ("M-<F2>",    spawn "exec dmenu_run -r -i -nb '#222222' -nf '#888888' -sf '#ffffff' -sb '#5a8eff' -h 80 -w 400 -y 18 -fn 'xft:Droid Sans:pixelsize=9'")
+    , ("M-<F2>",    shellPrompt myPromptConfig)
+    -- , ("M-<F3>",    spawn "exec thunar")
+    , ( "M-<F3>",   spawn "exec dolphin")
+    -- , ("M-<F4>",    myRunOrRaise   "midori" (className =? "Midori"))
+    -- , ("M-<F4>",    myRunOrRaise   "iron" (className =? "Iron"))
+    , ("M-<F4>",    myRunOrRaise   "chromium-browser" (className =? "Chrome"))
+    -- , ("M-<F4>",    myRunOrRaise   "opera" (className =? "Opera"))
+    -- , ("M-<F5>",    runOrRaise   "pidgin"  (className =? "Pidgin"))
+    , ("M-<F5>",    runOrRaise   "kopete"  (className =? "Kopete"))
     , ("M-<F6>",    myRunOrRaise (myTerminal ++ " -name irssi -e zsh -c \"screen -x || screen irssi\"") (resource =? "irssi"))
     , ("M-<F7>",    myRunOrRaise (myTerminal ++ " -name mutt -e mutt ") (resource =? "mutt"))
     , ("M-<F8>",    myRunOrRaise (myTerminal ++ " -name ncmpcpp -e ~/.scripts/ncmpcpp_with_host") (resource =? "ncmpcpp"))
@@ -375,6 +407,7 @@ myKeys conf = mkKeymap conf $
     , ("M-S-<F4>",  runOrRaise   "liferea" (className =? "Liferea"))
     , ("M-S-<F7>",  myRunOrRaise (myTerminal ++ " -name abook -e abook ") (resource =? "abook"))
     , ("M-S-<F8>",  runOrRaise   "gmpc" (className =? "Gmpc"))
+    , ("M-S-<F10>", myRunOrRaise (myTerminal ++ " -name wicd -e wicd-curses ") (resource =? "wicd"))
 
     -- Multimedia keys
     , ("<XF86AudioMute>",        spawn "exec ossvol -t")
@@ -392,7 +425,7 @@ myKeys conf = mkKeymap conf $
     -- file for more information
     [ (m ++ k, f i)
          | (i, k) <- zip ((\ws -> last ws : ws) . workspaces $ conf)
-                         ("^" : map show ([1..9] ++ [0]))
+                          ("^" : map show ([1..9] ++ [0]))
          , (m, f) <- [ ("M-"    , toggleOrView)
                      , ("M-M1-" , windows . viewOnScreen 0)
                      , ("M-C-"  , windows . viewOnScreen 1)
@@ -413,7 +446,7 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 
     [ ((modMask, button1), (\w -> focus w >> mouseMoveWindow w >> windows W.shiftMaster)) -- Set the window to floating mode and move by dragging
     , ((modMask, button2), (\w -> focus w >> sendMessage ToggleStruts >> sendMessage ToggleLayout)) -- Toggle fullscreen
-    --, ((modMask, button2), (\w -> focus w >> windows W.shiftMaster)) -- Raise the window to the top of the stack
+    -- , ((modMask, button2), (\w -> focus w >> windows W.shiftMaster)) -- Raise the window to the top of the stack
     , ((modMask, button3), (\w -> focus w >> mouseResizeWindow w >> windows W.shiftMaster)) -- Set the window to floating mode and resize by dragging
     , ((modMask, button4), (\_ -> prevWS)) -- previous Workspace
     , ((modMask, button5), (\_ -> nextWS)) -- next Workspace
@@ -425,42 +458,56 @@ myMouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
 -- {{{ Statusbars and LogHook
 
 -- Statusbar with workspaces, layout and title
-myStatusBar = "dzen2 -x 0   -y 0 -h 18 -ta l -fg '" ++ myDzenFGColor ++
-              "' -bg '" ++ myNormalBGColor ++ "' -fn '" ++ myFont ++ "' -w 670"
+dzenWorkspace = "dzen2 -x 0   -y 0 -h 18 -ta l -fg '" ++ myDzenFGColor ++
+                "' -bg '" ++ myNormalBGColor ++ "' -fn '" ++ myFont ++ "' -w 670"
 
 -- Conky bar
-myConkyBar  = "conky -c ~/.xmonad/conkytoprc | dzen2 -x 670 -y 0 -h 18 -ta r -fg '" ++ myDzenFGColor ++
+dzenState  = "conky -c ~/.xmonad/conkytoprc | dzen2 -x 670 -y 0 -h 18 -ta r -fg '" ++ myDzenFGColor ++
               "' -bg '" ++ myNormalBGColor ++ "' -fn '" ++ myFont ++ "' -w 770"
 
+{-
+myStatusbar = map padL [ myMpd, myMail, myBattery, myDate ]
+    where myMpd     = let mpdControl = " ^ca(1,/home/nils/.scripts/mpc_with_host prev)^i(" ++ myIconDir ++ "/prev.xbm)^ca() " ++
+                                       "^ca(1,/home/nils/.scripts/mpc_with_host toggle)^i(" ++ myIconDir ++ "/pause.xbm)^ca() " ++
+                                       "^ca(1,/home/nils/.scripts/mpc_with_host next)^i(" ++ myIconDir ++ "/next.xbm)^ca()"
+                      in wrapL ("^fg(#a10a30)^i(" ++ myIconDir ++ "/mpd.xbm) ") (mpdControl ++ "^fg()") $
+                         logCmd "mpc status --format \"%artist% - %title%\""
+          myMail    = wrapL "^fg(#89b83f)" "^fg()" $
+                      maildirNew "/home/nils/.mail/mails/nsch/INBOX/"
+                      -- maildirNew "/home/nils/.mail/mails/uni/INBOX/"
+          myBattery = wrapL ("^fg(#324c80)^i(" ++ myIconDir ++ "/battery.xbm) ") "^fg()" $
+                      logCmd "/usr/bin/acpi | sed -r 's/.* (.+%).*/\\1/'"
+          myDate    = date  "^fg(#ffffff)%d.%m.%Y^fg() | ^fg(#ffffff)%H:%M^fg()"
+-}
+
+-- }}}
+
+-- {{{ Hooks
+
 -- LogHook
-myLogHook dzen = do
+myLogHook dzen1 = do
     fadeInactiveLogHook 0xdddddddd
-    dynamicLogWithPP $ defaultPP {
-          ppLayout          = dzenColor  myNormalFGColor  myNormalBGColor    . pad . loadIcons
-        , ppTitle           = dzenColor  myNormalFGColor  myNormalBGColor    . pad . dzenEscape
+    dynamicLogWithPP $ defaultPP
+                         { ppLayout          = dzenColor  myNormalFGColor  myNormalBGColor    . pad . loadIcons
+                         , ppTitle           = dzenColor  myNormalFGColor  myNormalBGColor    . pad . dzenEscape
 
-        , ppCurrent	        = dzenColor  myFocusedFGColor myFocusedBGColor   . pad . cornerIcon
-        , ppVisible	        = dzenColor  myVisibleFGColor myVisibleBGColor   . pad . cornerIcon
-        , ppHidden	        = dzenColor  myHiddenFGColor  myHiddenBGColor    . pad . cornerIcon
-        , ppHiddenNoWindows = dzenColor  myEmptyFGColor   myEmptyBGColor     . pad
-        , ppUrgent	        = dzenColor  myUrgentFGColor  myUrgentBGColor    . pad . cornerIcon -- . strip
-
-        , ppWsSep           = dzenEscape myWorkspaceSep
-        , ppSep             = dzenEscape mySep
-
-	    , ppOutput          = hPutStrLn  dzen
-        }
+                         , ppCurrent	     = dzenColor  myFocusedFGColor myFocusedBGColor   . pad . cornerIcon
+                         , ppVisible	     = dzenColor  myVisibleFGColor myVisibleBGColor   . pad . cornerIcon
+                         , ppHidden	         = dzenColor  myHiddenFGColor  myHiddenBGColor    . pad . cornerIcon
+                         , ppHiddenNoWindows = dzenColor  myEmptyFGColor   myEmptyBGColor     . pad
+                         , ppUrgent	         = dzenColor  myUrgentFGColor  myUrgentBGColor    . pad . cornerIcon -- . strip
+                                                  
+                         , ppWsSep           = dzenEscape myWorkspaceSep
+                         , ppSep             = dzenEscape mySep
+                         , ppOutput          = hPutStrLn  dzen1
+                         }
 
   where loadIcons s = fromMaybe s $ myIcons s >>= \icon -> return $ "^i(" ++ myIconDir ++ "/" ++ icon ++ ")"
         cornerIcon  = (++) $ "^i(" ++ myIconDir ++ "/" ++ myWsIcon ++ ")"
         strip       = tail . init . dzenStrip
 
--- }}}
-
--- {{{ Event, Startup and Manage hook
-
 -- Event hook
-myEventHook = const . return $ All True
+myEventHook _ = return $ All True
 
 -- Startup hook
 myStartupHook = do
@@ -468,7 +515,7 @@ myStartupHook = do
     setWMName "LG3D"
 
 -- Manage hook
-myManageHook = composeAll $
+myManageHook = composeAll (
 
     -- Float apps
     [ className =? c <||> resource =? r <||> title =? t <||> isDialog --> doCenterFloat
@@ -478,17 +525,27 @@ myManageHook = composeAll $
     ] ++
 
     -- Workspaces
-    [ className =? "Opera"      --> moveTo 0
-    -- , className =? "surf"       --> moveTo 0
+    [ className =? "Opera"      --> makeMaster <+> moveTo 0
+    , className =? "Chrome"     --> makeMaster <+> moveTo 0
+    , className =? "Iron"       --> makeMaster <+> moveTo 0
+    -- , className =? "surf"       --> makeMaster <+> moveTo 0
+    , className =? "Midori"     --> makeMaster <+> moveTo 0
     , className =? "Xchat"      --> moveTo 1
     , resource  =? "irssi"      --> moveTo 1
     , className =? "Pidgin"     --> moveTo (-1)
+    , className =? "Kopete"     --> moveTo (-1)
+    , className =? "Valknut"    --> moveTo 8
 
     -- "Real" fullscreen
     , isFullscreen              --> doFullFloat 
-    ]
+    , isDialog                  --> placeHook (inBounds (underMouse (0,0))) <+> makeMaster <+> doFloat
+    ] ) <+> manageDocks
+
+    -- Default hooks:
+    <+> insertPosition Below Newer
 
   where moveTo i = doF . W.shift $ if i == -1 then last myWorkspaces else myWorkspaces !! i
+        makeMaster = insertPosition Master Newer
 
 -- }}}
 
