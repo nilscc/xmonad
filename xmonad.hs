@@ -3,8 +3,8 @@
 -- XMonad Settings                                                  --
 --                                                                  --
 --                                                                  --
--- XMonad version 0.8.1-darcs                                       --
--- XMonad config: 2009-09-06                                        --
+-- XMonad version 0.9-darcs                                         --
+-- XMonad config: 2009.12.27                                        --
 --                                                                  --
 -- by Nils                                                          --
 --                                                                  --
@@ -41,15 +41,17 @@
 -- M + F1               - Start urxvtc                              --
 -- M + F2               - Open RunOrRaise prompt                    --
 -- M + F3               - Start thunar                              --
--- M + F4               - Start opera                               --
+-- M + F4               - Start chromium                            --
 -- M + F5               - Start irssi in urxvtc                     --
 -- M + F6               - Start pidgin on last workspace            --
 -- M + F7               - Start mutt in urxvtc                      --
 -- M + F8               - Start ncmpcpp in urxvtc                   --
+-- M + F10              - Start wicd-client
 -- M + S + F4           - Start liferea                             --
 -- M + S + F7           - Start abook in urxvtc                     --
 -- M + S + F8           - Start gmpc                                --
--- Mediakeys            - Control MPD & OSS                         --
+-- M + S + F10          - Start wicd-curses                         --
+-- Mediakeys            - Control MPD (OSS)                         --
 --                                                                  --
 -- M + Escape           - Kill current window                       --
 --                                                                  --
@@ -71,10 +73,7 @@
 -- M + S + Space        - Reset layout                              --
 --                                                                  --
 -- M + 1-0              - View workspace x or toggle to previous ws --
--- M + M1 + 1-0         - View workspace x on screen 0 *            --
--- M + C + 1-0          - View workspace x on screen 1 *            --
 -- M + S + 1-0          - Move current window to workspace x        --
--- M + S + C + 1-0      - Default greedyView behaviour              --
 --                                                                  --
 -- M + x / <R>          - Next workspace                            --
 -- M + y / <L>          - Previous workspace                        --
@@ -100,6 +99,12 @@
 -- M + S + a            - Switch focus to previous screen           --
 -- M + s                - Swap current screen with next screen      --
 -- M + S + s            - Swap current screen with previous screen  --
+-- M + M1 + 1-0         - View workspace x on screen 0 *            --
+-- M + C + 1-0          - View workspace x on screen 1 *            --
+-- M + M1 + e           - View & focus empty workspace on screen 0  --
+-- M + C + e            - View & focus empty workspace on screen 1  --
+-- M + M1 + q           - View & focus urgent workspace on screen 0 --
+-- M + C + q            - View & focus urgent workspace on screen 1 --
 --                                                                  --
 -- XMonad stuff:                                                    --
 --                                                                  --
@@ -109,16 +114,16 @@
 --                                                                  --
 --                                                                  --
 -- * Comment:                                                       --
--- M + ^ is basicly an alias for M + 0 (the last workspace)         --
+-- M + ^ is basicly an alias for M + 0 (the last workspace, german  --
+-- keyboard layout)                                                 --
 --                                                                  --
 -- }}}                                                              --
 ----------------------------------------------------------------------
 
 
+
 -- {{{ imports
 
--- Core
-import XMonad
 
 import Data.Monoid
 import Data.Maybe (fromMaybe)
@@ -128,17 +133,27 @@ import System.Exit
 
 import Control.Monad (liftM2, ap)
 
-import qualified XMonad.StackSet as W
+
 import qualified Data.Map        as M
 import qualified Data.List       as L
+
+-- MPD!
+-- import Network.MPD
+
+-- Core
+import XMonad
+import qualified XMonad.StackSet as W
 
 -- Actions
 import XMonad.Actions.CycleWS
 import XMonad.Actions.CycleRecentWS
 import XMonad.Actions.CopyWindow
+import XMonad.Actions.MouseResize
 import XMonad.Actions.OnScreen
 import XMonad.Actions.SinkAll
 import XMonad.Actions.WindowGo
+import XMonad.Actions.GridSelect
+import XMonad.Actions.DwmPromote
 
 -- Utils
 import XMonad.Util.Cursor
@@ -148,6 +163,7 @@ import XMonad.Util.WorkspaceCompare (getSortByIndex)
 import XMonad.Util.Loggers
 
 -- Hooks
+import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
 import XMonad.Hooks.DynamicLog
@@ -156,6 +172,7 @@ import XMonad.Hooks.UrgencyHook
 import XMonad.Hooks.FadeInactive
 import XMonad.Hooks.InsertPosition
 import XMonad.Hooks.Place
+import XMonad.Hooks.PositionStoreHooks
 
 -- Layouts
 import XMonad.Layout.Reflect
@@ -170,6 +187,8 @@ import XMonad.Layout.NoBorders
 import XMonad.Layout.ThreeColumns
 import XMonad.Layout.IM
 import XMonad.Layout.Tabbed
+import XMonad.Layout.WindowArranger
+import XMonad.Layout.Spacing
 
 -- Prompt
 import XMonad.Prompt
@@ -177,7 +196,7 @@ import XMonad.Prompt.Shell
 
 
 
-import XMonad.Config.Kde
+-- import XMonad.Config.Kde
 -- My stuff:
 -- import Control.Concurrent (forkIO)
 -- import XMonad.Util.StatusBar
@@ -189,8 +208,7 @@ import XMonad.Config.Kde
 main = do
     dzen1   <- spawnPipe dzenWorkspace
     dzen2   <- spawnPipe dzenState
-    -- runStatusbar (defaultStatusBar dzenState)
-    xmonad . withUrgencyHookC NoUrgencyHook (urgencyConfig { suppressWhen = Focused }) $ kde4Config {
+    xmonad . withUrgencyHookC NoUrgencyHook (urgencyConfig { suppressWhen = Focused }) . ewmh $ XConfig {
 
         -- simple stuff
           terminal           = myTerminal
@@ -253,16 +271,17 @@ myFont                  = "-*-snap-*-*-*-*-*-*-*-*-*-*-*-*"
 myIconDir                           = "/home/nils/.xmonad/icons"
 myWsIcon                            = "corner.xbm"
 
-myIcons "ResizableTall"             = Just "layout-tall-right.xbm"
-myIcons "Mirror ResizableTall"      = Just "layout-mirror-bottom.xbm"
-myIcons "Full"                      = Just "layout-full.xbm"
-myIcons "IM Grid"                   = Just "layout-im.xbm"
-myIcons "IM ResizableTall"          = Just "layout-im-tall.xbm"
-myIcons "IM Mirror ResizableTall"   = Just "layout-im-mirror.xbm"
-myIcons "IM Full"                   = Just "layout-im-full.xbm"
-myIcons "IM ReflectX IM Full"       = Just "layout-gimp.xbm"
-
-myIcons _                           = Nothing
+myIcons layout
+    | is "Mirror ResizableTall"     = Just "layout-mirror-bottom.xbm"
+    | is "ResizableTall"            = Just "layout-tall-right.xbm"
+    | is "Full"                     = Just "layout-full.xbm"
+    | is "IM Grid"                  = Just "layout-im.xbm"
+    | is "IM ResizableTall"         = Just "layout-im-tall.xbm"
+    | is "IM Mirror ResizableTall"  = Just "layout-im-mirror.xbm"
+    | is "IM Full"                  = Just "layout-im-full.xbm"
+    | is "IM ReflectX IM Full"      = Just "layout-gimp.xbm"
+    | otherwise = Nothing
+  where is = (`L.isInfixOf` layout)
 
 
 -- Colors:
@@ -290,6 +309,7 @@ myEmptyBGColor   = ""
 
 -- Tabbed theme:
 
+{-
 myTabbedTheme = Theme {
 
       activeTextColor       = myFocusedFGColor
@@ -306,6 +326,7 @@ myTabbedTheme = Theme {
     , decoHeight            = 18
 
 }
+-}
 
 -- Prompt config
 -- , ("M-<F2>",    spawn "exec dmenu_run -r -i -nb '#222222' -nf '#888888' -sf '#ffffff' -sb '#5a8eff' -h 80 -w 400 -y 18 -fn 'xft:Droid Sans:pixelsize=9'")
@@ -339,10 +360,15 @@ myKeys conf = mkKeymap conf $
     , ("M-<U>", windows W.focusUp)              -- Move focus to the previous window
 
     , ("M-q", focusUrgent)                      -- Focus urgent windows
-    , ("M-w"  , windows W.focusMaster)          -- Move focus to the master window
-    , ("M-S-w", windows W.shiftMaster)          -- Swap the focused window and the master window
-    , ("M-e"  , moveTo Next EmptyWS)            -- View next empty workspace
-    , ("M-S-e", shiftTo' Next EmptyWS)          -- Move current window to next empty workspace
+
+    , ("M-M1-q", onScreen' focusUrgent FocusNew 0) -- Focus urgent windows on screen 0
+    , ("M-C-q" ,  onScreen' focusUrgent FocusNew 1) -- Focus urgent windows on screen 1
+    , ("M-w"   , windows W.focusMaster)          -- Move focus to the master window
+    , ("M-S-w" , dwmpromote)                     -- Swap the focused window and the master window
+    , ("M-e"   , moveTo Next EmptyWS)            -- View next empty workspace
+    , ("M-M1-e", onScreen' (moveTo Next EmptyWS) FocusNew 0) -- View next empty workspace on screen 0
+    , ("M-C-e" , onScreen' (moveTo Next EmptyWS) FocusNew 1) -- View next empty workspace on screen 1
+    , ("M-S-e" , shiftTo' Next EmptyWS)          -- Move current window to next empty workspace
 
     , ("M-S-j", windows W.swapDown)             -- Swap the focused window with the next window
     , ("M-S-k", windows W.swapUp)               -- Swap the focused window with the previous window
@@ -357,6 +383,8 @@ myKeys conf = mkKeymap conf $
 
     , ("M-t", withFocused $ windows . W.sink)   -- Push window back into tiling
     , ("M-S-t", sinkAll)                        -- Push all floating windows back into tiling
+
+    , ("M-<Return>", goToSelected defaultGSConfig { gs_cellwidth = 200 })   -- grid select
 
     -- Toggle fullscreen
     , ("M-f", sendMessage ToggleStruts >> sendMessage ToggleLayout)
@@ -384,9 +412,8 @@ myKeys conf = mkKeymap conf $
     -- Restart XMonad, take care of conky
     , ("M-S-r", spawn "exec killall conky" >> restart "xmonad" True)
     -- Quit XMonad
-    -- , ("M-C-<Backspace>", io $ exitWith ExitSuccess)
-    , ("M-C-<Backspace>", spawn "dbus-send --print-reply --dest=org.kde.ksmserver /KSMServer org.kde.KSMServerInterface.logout int32:1 int32:0 int32:1")
-
+    , ("M-C-<Backspace>", io $ exitWith ExitSuccess)
+    -- , ("M-C-<Backspace>", spawn "dbus-send --print-reply --dest=org.kde.ksmserver /KSMServer org.kde.KSMServerInterface.logout int32:1 int32:0 int32:1")
 
     -- Applications to run
     , ("M-<F1>",    spawn myTerminal)
@@ -396,10 +423,10 @@ myKeys conf = mkKeymap conf $
     , ( "M-<F3>",   spawn "exec dolphin")
     -- , ("M-<F4>",    myRunOrRaise   "midori" (className =? "Midori"))
     -- , ("M-<F4>",    myRunOrRaise   "iron" (className =? "Iron"))
-    , ("M-<F4>",    myRunOrRaise   "chromium-browser" (className =? "Chrome"))
+    , ("M-<F4>",    myRunOrRaise   "chromium" (className =? "Chrome"))
     -- , ("M-<F4>",    myRunOrRaise   "opera" (className =? "Opera"))
-    -- , ("M-<F5>",    runOrRaise   "pidgin"  (className =? "Pidgin"))
-    , ("M-<F5>",    runOrRaise   "kopete"  (className =? "Kopete"))
+    , ("M-<F5>",    runOrRaise   "pidgin"  (className =? "Pidgin"))
+    -- , ("M-<F5>",    runOrRaise   "kopete"  (className =? "Kopete"))
     , ("M-<F6>",    myRunOrRaise (myTerminal ++ " -name irssi -e zsh -c \"screen -x || screen irssi\"") (resource =? "irssi"))
     , ("M-<F7>",    myRunOrRaise (myTerminal ++ " -name mutt -e mutt ") (resource =? "mutt"))
     , ("M-<F8>",    myRunOrRaise (myTerminal ++ " -name ncmpcpp -e ~/.scripts/ncmpcpp_with_host") (resource =? "ncmpcpp"))
@@ -427,8 +454,8 @@ myKeys conf = mkKeymap conf $
          | (i, k) <- zip ((\ws -> last ws : ws) . workspaces $ conf)
                           ("^" : map show ([1..9] ++ [0]))
          , (m, f) <- [ ("M-"    , toggleOrView)
-                     , ("M-M1-" , windows . viewOnScreen 0)
-                     , ("M-C-"  , windows . viewOnScreen 1)
+                     , ("M-M1-" , windows . greedyViewOnScreen 0)
+                     , ("M-C-"  , windows . greedyViewOnScreen 1)
                      , ("M-S-"  , windows . liftM2 (.) W.view W.shift)
                      , ("M-C-S-", windows . W.greedyView)
                      ]
@@ -465,21 +492,6 @@ dzenWorkspace = "dzen2 -x 0   -y 0 -h 18 -ta l -fg '" ++ myDzenFGColor ++
 dzenState  = "conky -c ~/.xmonad/conkytoprc | dzen2 -x 670 -y 0 -h 18 -ta r -fg '" ++ myDzenFGColor ++
               "' -bg '" ++ myNormalBGColor ++ "' -fn '" ++ myFont ++ "' -w 770"
 
-{-
-myStatusbar = map padL [ myMpd, myMail, myBattery, myDate ]
-    where myMpd     = let mpdControl = " ^ca(1,/home/nils/.scripts/mpc_with_host prev)^i(" ++ myIconDir ++ "/prev.xbm)^ca() " ++
-                                       "^ca(1,/home/nils/.scripts/mpc_with_host toggle)^i(" ++ myIconDir ++ "/pause.xbm)^ca() " ++
-                                       "^ca(1,/home/nils/.scripts/mpc_with_host next)^i(" ++ myIconDir ++ "/next.xbm)^ca()"
-                      in wrapL ("^fg(#a10a30)^i(" ++ myIconDir ++ "/mpd.xbm) ") (mpdControl ++ "^fg()") $
-                         logCmd "mpc status --format \"%artist% - %title%\""
-          myMail    = wrapL "^fg(#89b83f)" "^fg()" $
-                      maildirNew "/home/nils/.mail/mails/nsch/INBOX/"
-                      -- maildirNew "/home/nils/.mail/mails/uni/INBOX/"
-          myBattery = wrapL ("^fg(#324c80)^i(" ++ myIconDir ++ "/battery.xbm) ") "^fg()" $
-                      logCmd "/usr/bin/acpi | sed -r 's/.* (.+%).*/\\1/'"
-          myDate    = date  "^fg(#ffffff)%d.%m.%Y^fg() | ^fg(#ffffff)%H:%M^fg()"
--}
-
 -- }}}
 
 -- {{{ Hooks
@@ -487,6 +499,7 @@ myStatusbar = map padL [ myMpd, myMail, myBattery, myDate ]
 -- LogHook
 myLogHook dzen1 = do
     fadeInactiveLogHook 0xdddddddd
+    ewmhDesktopsLogHook
     dynamicLogWithPP $ defaultPP
                          { ppLayout          = dzenColor  myNormalFGColor  myNormalBGColor    . pad . loadIcons
                          , ppTitle           = dzenColor  myNormalFGColor  myNormalBGColor    . pad . dzenEscape
@@ -507,10 +520,13 @@ myLogHook dzen1 = do
         strip       = tail . init . dzenStrip
 
 -- Event hook
-myEventHook _ = return $ All True
+myEventHook e = do
+    -- ewmhDesktopsEventHook
+    positionStoreEventHook e
 
 -- Startup hook
 myStartupHook = do
+    ewmhDesktopsStartup
     setDefaultCursor 68
     setWMName "LG3D"
 
@@ -519,14 +535,17 @@ myManageHook = composeAll (
 
     -- Float apps
     [ className =? c <||> resource =? r <||> title =? t <||> isDialog --> doCenterFloat
-    | c <- ["Wine", "Switch2"]
+    | c <- ["Wine", "Switch2", "quantum-Quantum"]
     , r <- ["Dialog", "Download"]
     , t <- ["Schriftart auswählen", "Choose a directory"]
     ] ++
 
+    -- Separate float apps
+    [ className =? "Plasma-desktop" --> doFloat
+
     -- Workspaces
-    [ className =? "Opera"      --> makeMaster <+> moveTo 0
-    , className =? "Chrome"     --> makeMaster <+> moveTo 0
+    , className =? "Opera"      --> makeMaster <+> moveTo 0
+    , className =? "Chromium"   --> makeMaster <+> moveTo 0
     , className =? "Iron"       --> makeMaster <+> moveTo 0
     -- , className =? "surf"       --> makeMaster <+> moveTo 0
     , className =? "Midori"     --> makeMaster <+> moveTo 0
@@ -535,14 +554,17 @@ myManageHook = composeAll (
     , className =? "Pidgin"     --> moveTo (-1)
     , className =? "Kopete"     --> moveTo (-1)
     , className =? "Valknut"    --> moveTo 8
+    , className =? "Linuxdcpp"  --> moveTo 8
 
     -- "Real" fullscreen
     , isFullscreen              --> doFullFloat 
     , isDialog                  --> placeHook (inBounds (underMouse (0,0))) <+> makeMaster <+> doFloat
-    ] ) <+> manageDocks
+    ] )
 
     -- Default hooks:
-    <+> insertPosition Below Newer
+    -- <+> insertPosition Below Newer
+    <+> positionStoreManageHook
+    <+> manageDocks
 
   where moveTo i = doF . W.shift $ if i == -1 then last myWorkspaces else myWorkspaces !! i
         makeMaster = insertPosition Master Newer
@@ -551,7 +573,7 @@ myManageHook = composeAll (
 
 -- {{{ Layouts
 
-myLayout = smartBorders . avoidStruts . toggleLayouts Full $
+myLayout = windowArrange . smartBorders . avoidStruts . toggleLayouts Full $
 
     -- Layouts for workspaces
     -- onWorkspace (head myWorkspaces) myBrowser $
@@ -563,8 +585,7 @@ myLayout = smartBorders . avoidStruts . toggleLayouts Full $
   where
     tiled       = {- layoutHints $ -} ResizableTall 1 (3/100) (2/3) []
 
-    myIM        = withIM (0.15) (Role "buddy_list") $ Grid ||| Mirror tiled ||| tiled ||| Full -- Pidgin buddy list
-    -- myBrowser   = tabbedBottom shrinkText myTabbedTheme ||| Grid
+    myIM        = withIM (0.15) (Role "buddy_list") $ Grid ||| Mirror Grid ||| Mirror tiled ||| tiled ||| Full -- Pidgin buddy list
     gimp        = withIM (0.15) (Role "gimp-toolbox") $
                   reflectHoriz $
                   withIM (0.21) (Role "gimp-dock") Full
