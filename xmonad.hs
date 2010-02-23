@@ -4,7 +4,7 @@
 --                                                                  --
 --                                                                  --
 -- XMonad version 0.9-darcs                                         --
--- XMonad config: 2009.12.27                                        --
+-- XMonad config: 2010-02-20                                        --
 --                                                                  --
 -- by Nils                                                          --
 --                                                                  --
@@ -148,12 +148,12 @@ import qualified XMonad.StackSet as W
 import XMonad.Actions.CycleWS
 import XMonad.Actions.CycleRecentWS
 import XMonad.Actions.CopyWindow
+import XMonad.Actions.DwmPromote
+import XMonad.Actions.GridSelect
 import XMonad.Actions.MouseResize
 import XMonad.Actions.OnScreen
 import XMonad.Actions.SinkAll
 import XMonad.Actions.WindowGo
-import XMonad.Actions.GridSelect
-import XMonad.Actions.DwmPromote
 
 -- Utils
 import XMonad.Util.Cursor
@@ -173,6 +173,7 @@ import XMonad.Hooks.FadeInactive
 import XMonad.Hooks.InsertPosition
 import XMonad.Hooks.Place
 import XMonad.Hooks.PositionStoreHooks
+import XMonad.Hooks.ScreenCorners
 
 -- Layouts
 import XMonad.Layout.Reflect
@@ -427,7 +428,7 @@ myKeys conf = mkKeymap conf $
     -- , ("M-<F4>",    myRunOrRaise   "opera" (className =? "Opera"))
     , ("M-<F5>",    runOrRaise   "pidgin"  (className =? "Pidgin"))
     -- , ("M-<F5>",    runOrRaise   "kopete"  (className =? "Kopete"))
-    , ("M-<F6>",    myRunOrRaise (myTerminal ++ " -name irssi -e zsh -c \"screen -x || screen irssi\"") (resource =? "irssi"))
+    , ("M-<F6>",    myRunOrRaise (myTerminal ++ " -name screen -title screen -e zsh -c \"screen -x || screen irssi\"") (resource =? "screen"))
     , ("M-<F7>",    myRunOrRaise (myTerminal ++ " -name mutt -e mutt ") (resource =? "mutt"))
     , ("M-<F8>",    myRunOrRaise (myTerminal ++ " -name ncmpcpp -e ~/.scripts/ncmpcpp_with_host") (resource =? "ncmpcpp"))
     , ("M-<F10>",   spawn "exec wicd-client -n")
@@ -444,6 +445,13 @@ myKeys conf = mkKeymap conf $
     , ("<XF86AudioStop>",        spawn "exec ~/.scripts/mpc_with_host stop")
     , ("<XF86AudioPrev>",        spawn "exec ~/.scripts/mpc_with_host prev")
     , ("<XF86AudioNext>",        spawn "exec ~/.scripts/mpc_with_host next")
+
+    -- Testing:
+    -- , ("M-i", inCorner SCUpperLeft (return ())) -- (goToSelected defaultGSConfig { gs_cellwidth = 200 }))
+    -- , ("M-i", inCorner SCUpperRight (return ())) -- (goToSelected defaultGSConfig { gs_cellwidth = 200 }))
+    -- , ("M-i", inCorner LowerLeft (return ()))
+    -- , ("M-i", inCorner LowerRight (return ()))
+
     ]
     ++
 
@@ -520,15 +528,14 @@ myLogHook dzen1 = do
         strip       = tail . init . dzenStrip
 
 -- Event hook
-myEventHook e = do
-    -- ewmhDesktopsEventHook
-    positionStoreEventHook e
+myEventHook = ewmhDesktopsEventHook <+> screenCornerEventHook
 
 -- Startup hook
 myStartupHook = do
     ewmhDesktopsStartup
     setDefaultCursor 68
     setWMName "LG3D"
+    addScreenCorner SCUpperRight $ onScreen' (goToSelected defaultGSConfig { gs_cellwidth = 250 }) FocusNew 0
 
 -- Manage hook
 myManageHook = composeAll (
@@ -550,7 +557,7 @@ myManageHook = composeAll (
     -- , className =? "surf"       --> makeMaster <+> moveTo 0
     , className =? "Midori"     --> makeMaster <+> moveTo 0
     , className =? "Xchat"      --> moveTo 1
-    , resource  =? "irssi"      --> moveTo 1
+    , resource  =? "screen"     --> moveTo 1
     , className =? "Pidgin"     --> moveTo (-1)
     , className =? "Kopete"     --> moveTo (-1)
     , className =? "Valknut"    --> moveTo 8
@@ -583,7 +590,7 @@ myLayout = windowArrange . smartBorders . avoidStruts . toggleLayouts Full $
     Mirror tiled ||| tiled ||| Full ||| gimp ||| simplestFloat
 
   where
-    tiled       = {- layoutHints $ -} ResizableTall 1 (3/100) (2/3) []
+    tiled       = ResizableTall 1 (3/100) (2/3) []
 
     myIM        = withIM (0.15) (Role "buddy_list") $ Grid ||| Mirror Grid ||| Mirror tiled ||| tiled ||| Full -- Pidgin buddy list
     gimp        = withIM (0.15) (Role "gimp-toolbox") $
